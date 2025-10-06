@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Assistive Technology Catalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F0E9;
+            color: #3A3A3A;
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+            color: #3A3A3A;
+            border-color: #A4B494;
+        }
+        .filter-btn:hover {
+            background-color: #D2C4B8;
+        }
+        .filter-btn.active {
+            background-color: #6A7B76;
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .accordion-header {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        
+        /* Custom Toggle Switch for Institutional Filter */
+        .toggle-switch input[type="checkbox"] {
+            height: 0;
+            width: 0;
+            visibility: hidden;
+        }
+        .toggle-switch label {
+            cursor: pointer;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            display: block;
+            border-radius: 30px;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+        .toggle-switch label:after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 90px;
+            transition: 0.3s;
+        }
+        .toggle-switch input:checked + label {
+            background: #E0A370; /* Accent color when active */
+        }
+        .toggle-switch input:checked + label:after {
+            left: calc(100% - 3px);
+            transform: translateX(-100%);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#3A3A3A] mb-2">Interactive Assistive Technology Catalog</h1>
+            <p class="text-lg text-[#6A7B76]">Explore tools for students in Australian Tertiary Education. Use the filters to discover tools tailored to your needs.</p>
+        </header>
+
+        <main>
+            <section id="filters" class="mb-8 p-6 bg-white rounded-lg shadow-md">
+                <p class="text-sm text-gray-700 mb-6">This section allows you to narrow down the comprehensive list of tools based on the type of support needed, how the software is accessed, and the platform it runs on. Filtering updates the charts below instantly, giving you a dynamic view of the tool landscape.</p>
+                <div class="space-y-6">
+                    <!-- NEW INSTITUTIONAL FILTER -->
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-[#3A3A3A]">Institutional Support Filter</h3>
+                        <div class="flex items-center space-x-4">
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="institutional-filter" />
+                                <label for="institutional-filter"></label>
+                            </div>
+                            <label for="institutional-filter" class="text-base font-medium text-gray-700">Show only AT Room / Exam Approved Software</label>
+                        </div>
+                    </div>
+                    <!-- END NEW INSTITUTIONAL FILTER -->
+
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-[#3A3A3A]">Filter by Support Need</h3>
+                        <div id="disability-filters" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-[#3A3A3A]">Filter by Category</h3>
+                        <div id="category-filters" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-[#3A3A3A]">Filter by Access Type</h3>
+                        <div id="access-filters" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-3 text-[#3A3A3A]">Filter by Operating System</h3>
+                        <div id="os-filters" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <button id="reset-filters" class="px-6 py-2 bg-[#E0A370] text-white font-semibold rounded-lg shadow-sm hover:bg-opacity-90 transition-colors">Reset All Filters</button>
+                </div>
+            </section>
+
+            <section id="dashboard" class="mb-8">
+                <p class="text-sm text-gray-700 mb-6 p-6 bg-white rounded-lg shadow-md">These dynamic visualizations provide an overview of the tools that match your current filter selection. Use them to understand the distribution of Free vs. Paid tools, or where the largest number of tools are targeted.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
+                        <h3 class="text-xl font-bold text-center mb-4 text-[#3A3A3A]">Tools by Access Type</h3>
+                        <div class="chart-container">
+                            <canvas id="accessChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
+                        <h3 class="text-xl font-bold text-center mb-4 text-[#3A3A3A]">Tools by Category</h3>
+                         <div class="chart-container" style="max-width: 600px;">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
+                        <h3 class="text-xl font-bold text-center mb-4 text-[#3A3A3A]">Tools by Platform</h3>
+                        <div class="chart-container">
+                            <canvas id="osChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="results" class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <p class="text-sm text-gray-700 mb-6">The tool cards below detail each software package, its key features, and how it benefits students with specific learning or physical needs. Click through the filters above to find the tools most relevant to your situation.</p>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-[#3A3A3A]">Available Tools</h2>
+                    <p id="results-count" class="text-lg font-semibold text-[#6A7B76]">Showing 0 tools</p>
+                </div>
+                <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </section>
+
+            <section id="inbuilt-deep-dive" class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-[#3A3A3A] mb-4">Inbuilt Accessibility Deep Dive</h2>
+                <p class="text-sm text-gray-700 mb-6">Many standard programs and operating systems include powerful, free accessibility features that don't require external software installation. Explore the tabs below to learn about the native tools available in the most common digital environments.</p>
+                
+                <div id="accordion-container" class="space-y-2">
+                    <!-- Microsoft -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div id="acc-microsoft" class="accordion-header bg-gray-50 hover:bg-gray-100 p-4 flex justify-between items-center font-semibold text-[#3A3A3A] text-lg">
+                            Microsoft (Windows, M365, Edge) <span class="text-xl transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content p-4 text-gray-700">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>**Microsoft Read Aloud (M365/Edge):** Text-to-speech built directly into Word, Outlook, and the Edge browser for reading emails, documents, and web pages.</li>
+                                <li>**Microsoft Dictate (M365):** Simple, accurate voice-to-text functionality available within all Microsoft 365 applications for hands-free typing.</li>
+                                <li>**Microsoft Narrator:** The native, free screen reader for Windows, providing spoken and braille output for text and controls.</li>
+                                <li>**Windows Magnifier:** Built-in screen magnification tool to enlarge the screen or specific parts, essential for low vision users.</li>
+                                <li>**OneNote:** Note-taking app with integrated **Immersive Reader** (TTS, line focus, simplified view).</li>
+                                <li>**Microsoft Co-Pilot (Freemium):** AI assistant capable of summarizing long documents, restructuring complex text, and aiding in research synthesis, supporting executive functions.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Google Apps and Chrome -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div id="acc-google" class="accordion-header bg-gray-50 hover:bg-gray-100 p-4 flex justify-between items-center font-semibold text-[#3A3A3A] text-lg">
+                            Google Apps & Chrome <span class="text-xl transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content p-4 text-gray-700">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>**Chrome Live Captions:** Real-time captioning for any audio or video content played within the Chrome browser, greatly benefiting students who are hard of hearing or studying in quiet environments.</li>
+                                <li>**Chrome Select to Speak (Read Aloud):** A Chrome OS feature (also available as an extension) that reads selected text aloud using a high-quality voice.</li>
+                                <li>**Google Docs/Slides Voice Typing:** Hands-free text input directly into Google applications.</li>
+                                <li>**High Contrast/Dark Mode Extensions:** Available for general visual accessibility and reducing visual stress.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Apple (macOS & iOS) -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div id="acc-apple" class="accordion-header bg-gray-50 hover:bg-gray-100 p-4 flex justify-between items-center font-semibold text-[#3A3A3A] text-lg">
+                            Apple (macOS, iOS, Safari) <span class="text-xl transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content p-4 text-gray-700">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>**Apple VoiceOver:** Apple's powerful, native screen reader for blind and low vision users across all their devices.</li>
+                                <li>**Apple Voice Control:** Advanced dictation and voice command system that allows hands-free control of the operating system.</li>
+                                <li>**Apple Live Captions (iOS 16+ / macOS Ventura+):** System-wide real-time captioning for media, phone calls, and video conferencing.</li>
+                                <li>**Apple Read and Speak:** Includes **Speak Selection** (reads highlighted text) and **Speak Screen** (reads the whole screen) for quick TTS access.</li>
+                                <li>**macOS Zoom/Display Tools:** Highly configurable screen magnification, colour filters, cursor size adjustment, and inverted colours.</li>
+                                <li>**Safari Reader View:** Removes visual distractions (ads, formatting) from web pages, enhancing reading focus.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Firefox & General Browsers -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div id="acc-firefox" class="accordion-header bg-gray-50 hover:bg-gray-100 p-4 flex justify-between items-center font-semibold text-[#3A3A3A] text-lg">
+                            Firefox & General Browser Features <span class="text-xl transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content p-4 text-gray-700">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>**Firefox Reader View:** Similar to Safari, this button strips non-essential elements from a webpage for simplified, focused reading.</li>
+                                <li>**Standard Zoom & Text Resizing:** All major browsers (Chrome, Edge, Firefox, Safari) allow users to zoom the entire page or increase text size only (under Settings → Advanced in Safari).</li>
+                                <li>**Keyboard Shortcuts:** All browsers support standard navigation shortcuts. Knowing these can significantly speed up access for users with mobility issues (e.g., Tab to navigate, Spacebar/Page Down to scroll).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        <footer class="text-center mt-12 pb-8 text-gray-500">
+            <p>Catalog data verified as of October 2025.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const atData = [
+            { name: "Forest", developer: "Seekrtech", access: "Freemium", os: ["iOS", "Android", "Chrome"], category: "Cognitive & Executive Function", disabilities: ["ADHD/Executive Function"], description: "A productivity timer that gamifies focus. Users plant a virtual tree that grows while they work; if they leave the app, the tree dies.", benefits: "Helps users with ADHD, anxiety, or executive function challenges stay on task by creating a tangible consequence for digital distraction.", institutional_support: false },
+            { name: "Freedom", developer: "Freedom.to", access: "Paid", os: ["Windows", "Mac", "iOS", "Android", "Chrome"], category: "Cognitive & Executive Function", disabilities: ["ADHD/Executive Function"], description: "A website and app blocker that allows users to block distracting sites and apps across all their devices simultaneously for set periods.", benefits: "Powerful tool for students with ADHD or anyone prone to procrastination by removing the source of distraction during study sessions.", institutional_support: false },
+            { name: "Microsoft To Do", developer: "Microsoft", access: "Inbuilt", os: ["Windows", "Mac", "iOS", "Android"], category: "Cognitive & Executive Function", disabilities: ["ADHD/Executive Function", "Organizational Challenges"], description: "A task management app to create lists, set reminders, and break down large tasks into manageable steps. Part of the Microsoft 365 suite.", benefits: "Supports students with executive dysfunction, memory challenges, or ADHD by providing a structured way to manage coursework and deadlines.", institutional_support: false },
+            { name: "Microsoft Co-Pilot", developer: "Microsoft", access: "Freemium", os: ["Windows", "Mac", "Web"], category: "Cognitive & Executive Function", disabilities: ["ADHD/Executive Function", "Processing Speed"], description: "An AI assistant integrated into Microsoft tools, capable of summarizing documents, drafting content, and organizing information.", benefits: "Significantly reduces cognitive load for summarization and writing tasks, aiding students with processing and executive function challenges.", institutional_support: false },
+            { name: "Goblin Tools", developer: "Independent", access: "Free", os: ["Web", "iOS", "Android"], category: "Cognitive & Executive Function", disabilities: ["ADHD/Executive Function", "Organizational Challenges"], description: "A set of free AI tools, including 'The Magic Tool' for breaking down large tasks into manageable, actionable steps.", benefits: "Excellent support for students struggling with task initiation, planning, and estimation due to ADHD or anxiety.", institutional_support: false },
+            
+            { name: "Read&Write Gold", developer: "Texthelp", access: "Paid", os: ["Windows", "Mac", "Chrome", "iOS", "Android"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy", "ADHD/Executive Function", "Visual Stress"], description: "An integrated toolbar providing text-to-speech, word prediction, picture dictionaries, highlighters, and a screen mask.", benefits: "Supports students with dyslexia, literacy challenges, and ADHD by making reading and writing tasks more manageable. Widely licensed by Australian universities.", institutional_support: false },
+            { name: "ClaroRead", developer: "Claro Software", access: "Paid", os: ["Windows", "Mac", "Chrome"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy", "Visual Stress"], description: "A toolbar offering text-to-speech with high-quality voices, word prediction, spellcheck, and screen tinting.", benefits: "Excellent for students with dyslexia and other reading difficulties. The screen tinting feature benefits users with visual stress (Scotopic Sensitivity).", institutional_support: false },
+            { name: "Grammarly", developer: "Grammarly, Inc.", access: "Freemium", os: ["Windows", "Mac", "iOS", "Android", "Chrome"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy", "Dysgraphia"], description: "An advanced grammar checker, spell checker, and plagiarism detector. Provides suggestions on clarity, tone, and style.", benefits: "Assists all students, particularly those with dyslexia or dysgraphia, in producing clearer, more professional written work.", institutional_support: false },
+            { name: "SensusAccess", developer: "Sensus", access: "Paid", os: ["Web"], category: "Reading, Writing & Literacy", disabilities: ["Blindness/Low Vision", "Dyslexia/Literacy"], description: "An automated service that converts documents into a range of alternate formats (e.g., PDF to audio, Word, Braille, e-book).", benefits: "Essential for students who are blind, have low vision, or dyslexia, allowing them to convert inaccessible readings into a format they can use.", institutional_support: false },
+            { name: "Immersive Reader", developer: "Microsoft", access: "Inbuilt", os: ["Windows", "Mac"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy", "ADHD/Executive Function"], description: "A free tool built into Microsoft products that provides text-to-speech, line focus, translation, picture dictionary, and text spacing options.", benefits: "A powerful, free tool for students with dyslexia, ADHD, or for whom English is an additional language. Improves reading comprehension and focus.", institutional_support: false },
+            { name: "Balabolka", developer: "Cross+A", access: "Free", os: ["Windows"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy", "Auditory Processing"], description: "A free text-to-speech program that can use all computer voices installed. It can save synchronized text in various audio formats (MP3, WAV, etc.).", benefits: "Ideal for creating permanent audio versions of study materials for offline listening and review.", institutional_support: false },
+            { name: "Microsoft Read Aloud", developer: "Microsoft", access: "Inbuilt", os: ["Windows", "Mac", "Web"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy"], description: "Text-to-speech function integrated into Microsoft Word, Edge, and other M365 applications.", benefits: "Provides immediate, high-quality audio feedback for proofreading and reading comprehension without needing extra software.", institutional_support: true },
+            { name: "Apple Read and Speak", developer: "Apple", access: "Inbuilt", os: ["Mac", "iOS"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy"], description: "System-level text-to-speech, including Speak Selection and Speak Screen features for reading selected text or the entire display.", benefits: "Provides core TTS functionality across all native Apple applications and content.", institutional_support: false },
+            { name: "Adobe Read Aloud", developer: "Adobe", access: "Inbuilt", os: ["Windows", "Mac"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy"], description: "Text-to-speech function built into Adobe Acrobat Reader for reading PDF documents.", benefits: "Ensures accessibility of the highly common PDF document format for students with reading difficulties.", institutional_support: false },
+            { name: "Natural Reader", developer: "NaturalSoft", access: "Freemium", os: ["Web", "Windows", "Mac", "iOS", "Android"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy", "Reading Fatigue"], description: "A popular, high-quality text-to-speech program with various voices and support for converting text, PDFs, and documents into speech.", benefits: "The high-quality voices enhance listening comprehension and retention, reducing reading fatigue.", institutional_support: false },
+            { name: "Chrome Read Aloud", developer: "Google", access: "Inbuilt", os: ["Chrome", "Web"], category: "Reading, Writing & Literacy", disabilities: ["Dyslexia/Literacy"], description: "Features like 'Select to Speak' in Chrome OS/extensions that read selected text aloud in the browser environment.", benefits: "Instant TTS access within the web browser environment, minimizing friction for reading web-based content.", institutional_support: false },
+            
+            { name: "Dragon Professional", developer: "Nuance", access: "Paid", os: ["Windows"], category: "Speech & Voice Recognition", disabilities: ["Physical Mobility/RSI", "Dysgraphia"], description: "Premium speech-to-text software for dictating documents, controlling a computer by voice, and creating custom voice commands.", benefits: "For students with physical disabilities, RSI, or severe dysgraphia, enabling hands-free computer use and efficient text production.", institutional_support: true },
+            { name: "Windows Voice Recognition", developer: "Microsoft", access: "Inbuilt", os: ["Windows"], category: "Speech & Voice Recognition", disabilities: ["Physical Mobility/RSI", "Dysgraphia"], description: "Built-in tool for dictating text and controlling the Windows operating system with voice commands.", benefits: "A free, accessible option for students who need basic dictation or hands-free navigation.", institutional_support: false },
+            { name: "macOS Dictation", developer: "Apple", access: "Inbuilt", os: ["Mac", "iOS"], category: "Speech & Voice Recognition", disabilities: ["Physical Mobility/RSI", "Dysgraphia"], description: "Built-in feature for dictating text in any application. Enhanced dictation allows for offline use.", benefits: "A high-quality, free dictation tool for Mac users, ideal for writing essays and notes.", institutional_support: true },
+            { name: "Microsoft Dictate", developer: "Microsoft", access: "Inbuilt", os: ["Windows", "Mac"], category: "Speech & Voice Recognition", disabilities: ["Physical Mobility/RSI"], description: "Native dictation feature built into Microsoft Word and other M365 apps.", benefits: "Seamless, accurate dictation directly inside the primary word processing environment used by most students.", institutional_support: true },
+            { name: "Apple Voice Control", developer: "Apple", access: "Inbuilt", os: ["Mac", "iOS"], category: "Speech & Voice Recognition", disabilities: ["Physical Mobility/RSI"], description: "Advanced system for controlling the device and inputting text entirely by voice commands, including custom controls.", benefits: "Empowers users with physical mobility challenges to fully operate their Apple devices hands-free.", institutional_support: true },
+            
+            { name: "JAWS", developer: "Freedom Scientific", access: "Paid", os: ["Windows"], category: "Screen Readers & Visual Aids", disabilities: ["Blindness"], description: "Job Access With Speech (JAWS) is the world's most popular screen reader for users who are blind, reading aloud all on-screen content.", benefits: "The gold standard for students who are blind, enabling full access to digital learning materials, websites, and applications.", institutional_support: true },
+            { name: "NVDA", developer: "NV Access", access: "Free", os: ["Windows"], category: "Screen Readers & Visual Aids", disabilities: ["Blindness"], description: "NonVisual Desktop Access (NVDA) is a powerful, free, open-source screen reader for Windows.", benefits: "Provides full computer access at no cost, making it an equitable and widely used alternative to JAWS for students who are blind.", institutional_support: true },
+            { name: "ZoomText", developer: "Freedom Scientific", access: "Paid", os: ["Windows", "Mac"], category: "Screen Readers & Visual Aids", disabilities: ["Low Vision"], description: "A screen magnification and reading software for users with low vision. It enhances and enlarges everything on screen and can read text aloud.", benefits: "Essential for students with low vision, reducing eye strain and making on-screen content legible. Often available in university AT rooms.", institutional_support: true },
+            { name: "VoiceOver", developer: "Apple", access: "Inbuilt", os: ["Mac", "iOS"], category: "Screen Readers & Visual Aids", disabilities: ["Blindness", "Low Vision"], description: "A gesture-based screen reader built into all Apple devices, providing spoken descriptions of everything on the screen.", benefits: "Provides unparalleled out-of-the-box accessibility for students who are blind or have low vision within the Apple ecosystem.", institutional_support: false },
+            { name: "Microsoft Narrator", developer: "Microsoft", access: "Inbuilt", os: ["Windows"], category: "Screen Readers & Visual Aids", disabilities: ["Blindness"], description: "The native screen reading utility for Windows, providing spoken and braille feedback.", benefits: "Immediate, free access to basic screen reading functionality for Windows users.", institutional_support: true },
+            { name: "Microsoft Magnifier", developer: "Microsoft", access: "Inbuilt", os: ["Windows"], category: "Screen Readers & Visual Aids", disabilities: ["Low Vision"], description: "Native screen magnification tool for Windows, allowing users to zoom and navigate the display.", benefits: "Essential for low vision users to customize the size and visibility of their screen content.", institutional_support: true },
+            { name: "macOS Zoom/Display Tools", developer: "Apple", access: "Inbuilt", os: ["Mac", "iOS"], category: "Screen Readers & Visual Aids", disabilities: ["Low Vision", "Visual Stress"], description: "System-level tools for screen magnification, cursor sizing, and colour inversion/filters (Mac Vision Tools).", benefits: "Highly configurable display options to support users with low vision or visual stress.", institutional_support: true },
+            
+            { name: "Genio (formerly Glean)", developer: "Genio", access: "Paid", os: ["Web", "iOS", "Android"], category: "Captioning, Audio & Video Access", disabilities: ["ADHD/Executive Function", "Dyslexia/Literacy", "Physical Mobility/RSI"], description: "Records lectures and allows students to tag key moments with simple labels or text notes. Creates an interactive audio recording synced to notes.", benefits: "A game-changer for students with ADHD, dyslexia, or physical disabilities who find it difficult to listen and write notes simultaneously.", institutional_support: false },
+            { name: "Otter.ai", developer: "Otter.ai", access: "Freemium", os: ["Web", "iOS", "Android"], category: "Captioning, Audio & Video Access", disabilities: ["Hearing Impairment", "Auditory Processing"], description: "Uses AI to generate real-time transcripts of lectures, meetings, and conversations. Can identify different speakers.", benefits: "Valuable for students who are hard of hearing, have auditory processing disorder, or need a full text record of spoken content to review.", institutional_support: false },
+            { name: "YouTube Auto-captions", developer: "Google", access: "Inbuilt", os: ["Web"], category: "Captioning, Audio & Video Access", disabilities: ["Hearing Impairment"], description: "Automatically generates captions for videos using speech recognition technology. Content creators can also edit them for accuracy.", benefits: "Provides essential access to video content for d/Deaf and hard-of-hearing students, and aids comprehension for many others.", institutional_support: false },
+            { name: "Chrome Live Captions", developer: "Google", access: "Inbuilt", os: ["Chrome"], category: "Captioning, Audio & Video Access", disabilities: ["Hearing Impairment"], description: "Real-time, system-level captioning for media played in the Chrome browser and other web content.", benefits: "Ensures all audio content consumed online is accessible via text transcription.", institutional_support: false },
+            { name: "Apple Live Captions", developer: "Apple", access: "Inbuilt", os: ["Mac", "iOS"], category: "Captioning, Audio & Video Access", disabilities: ["Hearing Impairment"], description: "System-wide real-time captioning for any audio (video calls, media, podcasts) played on the device.", benefits: "Provides essential accessibility across the entire Apple device ecosystem.", institutional_support: false },
+            
+            { name: "MindManager", developer: "Mindjet", access: "Paid", os: ["Windows", "Mac"], category: "Study, Planning & Organisation", disabilities: ["ADHD/Executive Function", "Dyslexia/Literacy", "Organizational Challenges"], description: "A professional mind mapping and diagramming tool used for brainstorming, planning assignments, and visualising complex information.", benefits: "Excellent for visual thinkers and students with dyslexia or ADHD to structure thoughts, plan essays, and break down complex topics.", institutional_support: false },
+            { name: "XMind", developer: "XMind Ltd.", access: "Freemium", os: ["Windows", "Mac", "iOS", "Android"], category: "Study, Planning & Organisation", disabilities: ["ADHD/Executive Function", "Organizational Challenges"], description: "A popular and user-friendly mind mapping and brainstorming tool with a generous free version.", benefits: "A great free alternative to MindManager, providing powerful visual organisation tools for planning and study.", institutional_support: false },
+            { name: "Zotero", developer: "Corporation for Digital Scholarship", access: "Free", os: ["Windows", "Mac"], category: "Study, Planning & Organisation", disabilities: ["Organizational Challenges", "ADHD/Executive Function"], description: "A free reference management tool to help collect, organise, cite, and share research sources.", benefits: "Reduces the executive function load of referencing. Invaluable for all students, especially those with ADHD or organisational challenges.", institutional_support: false },
+            { name: "Notion", developer: "Notion Labs, Inc.", access: "Freemium", os: ["Windows", "Mac", "iOS", "Android"], category: "Study, Planning & Organisation", disabilities: ["Organizational Challenges", "ADHD/Executive Function"], description: "An all-in-one workspace for notes, tasks, wikis, and databases. Highly customisable for creating personal study planners.", benefits: "Allows students with executive function challenges to build personalised organisation systems that work for their specific needs.", institutional_support: false },
+            { name: "OneNote", developer: "Microsoft", access: "Inbuilt", os: ["Windows", "Mac", "iOS", "Android"], category: "Study, Planning & Organisation", disabilities: ["Organizational Challenges", "Dyslexia/Literacy"], description: "Digital note-taking app with free-form organization, multimedia embedding, and integrated Immersive Reader.", benefits: "Highly flexible tool for organizing study materials, compatible across devices, and supports reading accessibility.", institutional_support: false },
+            { name: "NotebookLM", developer: "Google", access: "Free", os: ["Web"], category: "Study, Planning & Organisation", disabilities: ["Processing Speed", "ADHD/Executive Function"], description: "An AI research assistant that generates summaries, outlines, and Q&A based on documents you upload, linking directly to sources.", benefits: "Streamlines the research process, significantly helping students with processing speed or reading volume challenges.", institutional_support: false },
+            
+            { name: "Windows On-Screen Keyboard", developer: "Microsoft", access: "Inbuilt", os: ["Windows"], category: "Physical Access & Ergonomic Tools", disabilities: ["Physical Mobility/RSI"], description: "A visual keyboard displayed on the screen that allows users to type using a mouse, switch, or other pointing device.", benefits: "Essential for users with physical disabilities who cannot use a physical keyboard.", institutional_support: true },
+            { name: "Dwell Control (macOS)", developer: "Apple", access: "Inbuilt", os: ["Mac"], category: "Physical Access & Ergonomic Tools", disabilities: ["Physical Mobility/RSI"], description: "Allows users to control the pointer and perform mouse actions using tracking technology, such as head-tracking or eye-tracking hardware.", benefits: "Enables hands-free control of a Mac for users with significant physical disabilities.", institutional_support: false },
+            { name: "Apple Assistive Access", developer: "Apple", access: "Inbuilt", os: ["iOS"], category: "Physical Access & Ergonomic Tools", disabilities: ["Cognitive Disabilities"], description: "A highly simplified user interface for iPhone/iPad apps, reducing cognitive load and visual complexity.", benefits: "Provides critical support for users with cognitive disabilities by streamlining the mobile user experience.", institutional_support: false }
+        ];
+
+        const allCategories = ['All', ...new Set(atData.map(tool => tool.category))];
+        const allAccessTypes = [...new Set(atData.map(tool => tool.access))];
+        const allOsTypes = [...new Set(atData.flatMap(tool => tool.os))];
+        const allDisabilities = [...new Set(atData.flatMap(tool => tool.disabilities))].sort(); 
+        
+        let activeFilters = {
+            category: 'All',
+            access: [],
+            os: [],
+            disability: [],
+            institutional: false // New filter state
+        };
+
+        let accessChart, categoryChart, osChart;
+
+        const palette = {
+            bg: 'rgba(243, 240, 233, 0.5)',
+            text: '#3A3A3A',
+            primary: '#6A7B76',
+            secondary: '#A4B494',
+            accent: '#E0A370',
+            extra1: '#8B9D83',
+            extra2: '#D2C4B8',
+            institutional: '#FF6F61' // Distinctive color for institutional access
+        };
+        const chartColors = [palette.primary, palette.accent, palette.secondary, palette.extra1, palette.extra2, '#B4A594', '#9A8C7F'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFilters();
+            setupAccordion();
+            createCharts();
+            applyFilters();
+
+            // Setup listener for the new institutional toggle
+            document.getElementById('institutional-filter').addEventListener('change', (e) => {
+                activeFilters.institutional = e.target.checked;
+                applyFilters();
+            });
+        });
+
+        function setupAccordion() {
+            document.getElementById('accordion-container').addEventListener('click', (e) => {
+                let header = e.target.closest('.accordion-header');
+                if (header) {
+                    const content = header.nextElementSibling;
+                    const icon = header.querySelector('span');
+                    
+                    document.querySelectorAll('.accordion-content').forEach(c => {
+                        if (c !== content && c.style.maxHeight !== '0px') {
+                            c.style.maxHeight = '0px';
+                            c.previousElementSibling.querySelector('span').style.transform = 'rotate(0deg)';
+                        }
+                    });
+
+                    if (content.style.maxHeight !== '0px') {
+                        content.style.maxHeight = '0px';
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                }
+            });
+        }
+
+        function setupFilters() {
+            const disabilityContainer = document.getElementById('disability-filters');
+            allDisabilities.forEach(dis => {
+                const button = document.createElement('button');
+                button.className = 'filter-btn px-4 py-2 border border-gray-300 rounded-full text-sm font-medium';
+                button.textContent = dis;
+                button.dataset.filter = dis;
+                button.dataset.type = 'disability';
+                disabilityContainer.appendChild(button);
+            });
+
+            const categoryContainer = document.getElementById('category-filters');
+            allCategories.forEach(cat => {
+                const button = document.createElement('button');
+                button.className = `filter-btn px-4 py-2 border border-gray-300 rounded-full text-sm font-medium ${cat === 'All' ? 'active' : ''}`;
+                button.textContent = cat;
+                button.dataset.filter = cat;
+                button.dataset.type = 'category';
+                categoryContainer.appendChild(button);
+            });
+
+            const accessContainer = document.getElementById('access-filters');
+            allAccessTypes.forEach(acc => {
+                const button = document.createElement('button');
+                button.className = 'filter-btn px-4 py-2 border border-gray-300 rounded-full text-sm font-medium';
+                button.textContent = acc;
+                button.dataset.filter = acc;
+                button.dataset.type = 'access';
+                accessContainer.appendChild(button);
+            });
+
+            const osContainer = document.getElementById('os-filters');
+            allOsTypes.forEach(os => {
+                const button = document.createElement('button');
+                button.className = 'filter-btn px-4 py-2 border border-gray-300 rounded-full text-sm font-medium';
+                button.textContent = os;
+                button.dataset.filter = os;
+                button.dataset.type = 'os';
+                osContainer.appendChild(button);
+            });
+
+            document.getElementById('filters').addEventListener('click', (e) => {
+                if (e.target.classList.contains('filter-btn')) {
+                    const filter = e.target.dataset.filter;
+                    const type = e.target.dataset.type;
+
+                    if (type === 'category') {
+                        activeFilters.category = filter;
+                        document.querySelectorAll('#category-filters .filter-btn').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                    } else { 
+                        e.target.classList.toggle('active');
+                        const set = new Set(activeFilters[type]);
+                        if (set.has(filter)) {
+                            set.delete(filter);
+                        } else {
+                            set.add(filter);
+                        }
+                        activeFilters[type] = Array.from(set);
+                    }
+                    applyFilters();
+                }
+            });
+
+            document.getElementById('reset-filters').addEventListener('click', () => {
+                activeFilters = { category: 'All', access: [], os: [], disability: [], institutional: false };
+                document.querySelectorAll('.filter-btn.active').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('#category-filters .filter-btn[data-filter="All"]').classList.add('active');
+                document.getElementById('institutional-filter').checked = false;
+                applyFilters();
+            });
+        }
+
+        function applyFilters() {
+            const filteredData = atData.filter(tool => {
+                const categoryMatch = activeFilters.category === 'All' || tool.category === activeFilters.category;
+                const accessMatch = activeFilters.access.length === 0 || activeFilters.access.includes(tool.access);
+                const osMatch = activeFilters.os.length === 0 || activeFilters.os.some(os => tool.os.includes(os));
+                const disabilityMatch = activeFilters.disability.length === 0 || activeFilters.disability.some(dis => tool.disabilities.includes(dis));
+                
+                // NEW: Institutional Filter Logic
+                const institutionalMatch = activeFilters.institutional === false || tool.institutional_support === true;
+
+                return categoryMatch && accessMatch && osMatch && disabilityMatch && institutionalMatch;
+            });
+            
+            renderCards(filteredData);
+            updateCharts(filteredData);
+            document.getElementById('results-count').textContent = `Showing ${filteredData.length} tools`;
+        }
+        
+        function renderCards(data) {
+            const grid = document.getElementById('tools-grid');
+            grid.innerHTML = '';
+            if (data.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center text-gray-500">No tools match the selected filters.</p>`;
+                return;
+            }
+            data.forEach(tool => {
+                const osBadges = tool.os.map(os => `<span class="inline-block bg-gray-200 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${os}</span>`).join('');
+                const disabilityTags = tool.disabilities.map(dis => `<span class="inline-block bg-[#D2C4B8] text-gray-800 text-xs font-medium px-2 py-0.5 rounded mr-1 mb-1">${dis}</span>`).join('');
+                
+                // NEW: Institutional Support Badge
+                const institutionalBadge = tool.institutional_support 
+                    ? `<span class="inline-block bg-[#FF6F61] text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">AT Room / Exam Approved</span>` 
+                    : '';
+
+                const card = `
+                    <div class="card bg-white rounded-lg shadow-md overflow-hidden p-6 flex flex-col h-full border-t-4 border-[#6A7B76]">
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-[#3A3A3A]">${tool.name}</h3>
+                                <span class="text-sm font-semibold text-white px-3 py-1 rounded-full" style="background-color:${getAccessColor(tool.access)}">${tool.access}</span>
+                            </div>
+                            <span class="text-xs font-semibold text-[#E0A370] mb-3 uppercase tracking-wider">${tool.category}</span>
+                            <div class="mt-2 mb-3">${institutionalBadge}</div>
+                            <div class="mt-2 mb-3">${disabilityTags}</div>
+                            <p class="text-gray-700 text-sm mb-4">${tool.description}</p>
+                            <p class="text-sm text-[#3A3A3A]"><strong class="font-semibold">Benefits:</strong> ${tool.benefits}</p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm font-semibold text-gray-600 mb-2">Platforms:</p>
+                            <div>${osBadges}</div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        function getAccessColor(access) {
+            switch(access) {
+                case 'Free': return palette.secondary;
+                case 'Paid': return palette.accent;
+                case 'Freemium': return palette.primary;
+                case 'Inbuilt': return palette.extra2;
+                default: return '#cccccc';
+            }
+        }
+
+        const tooltipCallback = {
+             plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                              return label.join(' ');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        };
+
+        function createCharts() {
+            const accessCtx = document.getElementById('accessChart').getContext('2d');
+            accessChart = new Chart(accessCtx, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: chartColors }] },
+                options: { responsive: true, maintainAspectRatio: false, ...tooltipCallback }
+            });
+
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: chartColors, label: 'Tool Count' }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, ...tooltipCallback.plugins } }
+            });
+
+            const osCtx = document.getElementById('osChart').getContext('2d');
+            osChart = new Chart(osCtx, {
+                type: 'polarArea',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: chartColors }] },
+                options: { responsive: true, maintainAspectRatio: false, ...tooltipCallback }
+            });
+        }
+
+        function updateCharts(data) {
+            const accessCounts = allAccessTypes.reduce((acc, type) => {
+                acc[type] = 0;
+                return acc;
+            }, {});
+            const categoryCounts = allCategories.filter(c => c !== 'All').reduce((acc, cat) => {
+                acc[cat] = 0;
+                return acc;
+            }, {});
+            const osCounts = allOsTypes.reduce((acc, os) => {
+                acc[os] = 0;
+                return acc;
+            }, {});
+
+            data.forEach(tool => {
+                accessCounts[tool.access]++;
+                categoryCounts[tool.category]++;
+                tool.os.forEach(os => osCounts[os]++);
+            });
+
+            accessChart.data.labels = Object.keys(accessCounts);
+            accessChart.data.datasets[0].data = Object.values(accessCounts);
+            accessChart.update();
+
+            const categoriesWithData = Object.entries(categoryCounts).filter(([key, value]) => value > 0);
+            const sortedCategories = categoriesWithData.sort((a, b) => a[1] - b[1]);
+            categoryChart.data.labels = sortedCategories.map(item => item[0]);
+            categoryChart.data.datasets[0].data = sortedCategories.map(item => item[1]);
+            categoryChart.update();
+            
+            const osWithData = Object.entries(osCounts).filter(([key, value]) => value > 0);
+            osChart.data.labels = osWithData.map(item => item[0]);
+            osChart.data.datasets[0].data = osWithData.map(item => item[1]);
+            osChart.update();
+        }
+
+    </script>
+</body>
+</html>
